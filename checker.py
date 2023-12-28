@@ -34,14 +34,22 @@ class URLChecker:
     soup = BeautifulSoup(html, 'html.parser')
 
     h3s = soup.find_all('h3', {'class': 'post-title entry-title'})
-    new_urls = [h3.find('a')['href'] for h3 in h3s]
+    new_urls = {h3.find('a')['href']: h3.find('a').text for h3 in h3s}
 
-    for url in new_urls:
+    for url, title in new_urls.items():
       success = self._add_url_to_db(url)
       if success:
-        channel = client.get_channel(int(os.environ['CHANNEL_ID']))
-        logging.info(f'Sending URL {url} to channel')
-        await channel.send(url)
+        #pm_channel = client.get_channel(int(os.environ['PM_CHANNEL_ID']))
+        ecs_channel = client.get_channel(int(os.environ['ECS_CHANNEL_ID']))
+
+        #pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{os.environ['ROLE_ID']}>"
+        ecs_message = f"** :newspaper: | {title}**\n\n{url}"
+
+        #logging.info(f'Sending message {pm_message} to {pm_channel}')
+        logging.info(f'Sending message {ecs_message} to {ecs_channel}')
+
+        #await pm_channel.send(pm_message)
+        await ecs_channel.send(ecs_message)
 
   def _add_url_to_db(self, url):
     """Tries to add URL to DB, fails if it exists"""
@@ -50,5 +58,5 @@ class URLChecker:
       self.conn.commit()
       logging.info(f'Adding URL to DB: {url}')
       return True
-    except sqlite3.IntegrityError as e:
+    except sqlite3.IntegrityError:
       return False
