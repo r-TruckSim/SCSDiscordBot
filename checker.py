@@ -28,6 +28,9 @@ class URLChecker:
       async with aiohttp.ClientSession() as session:
         async with session.get(self.url) as response:
           html = await response.text()
+          
+          logging.info(f'Successfully connected to {self.url}')
+          logging.info(f'Currently logged on as {client.user}')
     except Exception as e:
       logging.error(f'Failed to fetch URL: {e}')
       return
@@ -50,6 +53,7 @@ class URLChecker:
 
         await ecs_channel.send(ecs_message)
         await pm_channel.send(pm_message)
+    
 
   def _add_url_to_db(self, url):
     """Tries to add URL to DB, fails if it exists"""

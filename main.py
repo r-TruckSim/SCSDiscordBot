@@ -1,18 +1,18 @@
 import asyncio
 import os
-from threading import Thread
+import logging
 
 from discord import Client, Intents
 
 from checker import URLChecker
-from serv import app
 
+logging.basicConfig(level=logging.INFO)
 
 class MyClient(Client):
 
   async def on_ready(self):
     """Starts up bot and creates scheduled async task"""
-    print(f'Logged on as {self.user}!')
+    logging.info(f'Logged on as {self.user}!')
     self.loop.create_task(run_schedule())
 
 
@@ -29,5 +29,4 @@ checker = URLChecker(URL, 'urls.db')
 intents = Intents.default()
 client = MyClient(intents=intents)
 
-Thread(target=lambda: app.run(host="0.0.0.0")).start()
 client.run(os.environ['DISCORD_TOKEN'])
