@@ -20,7 +20,7 @@ async def run_schedule():
   """Runs URL checking on schedule"""
   while True:
     await checker.handle_all_post_urls(client)
-    await asyncio.sleep(777)
+    await asyncio.sleep(77)
 
 
 URL = 'https://blog.scssoft.com/'

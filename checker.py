@@ -39,17 +39,17 @@ class URLChecker:
     for url, title in new_urls.items():
       success = self._add_url_to_db(url)
       if success:
-        #pm_channel = client.get_channel(int(os.environ['PM_CHANNEL_ID']))
         ecs_channel = client.get_channel(int(os.environ['ECS_CHANNEL_ID']))
-
-        #pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{os.environ['ROLE_ID']}>"
         ecs_message = f"** :newspaper: | {title}**\n\n{url}"
 
-        #logging.info(f'Sending message {pm_message} to {pm_channel}')
-        logging.info(f'Sending message {ecs_message} to {ecs_channel}')
+        pm_channel = client.get_channel(int(os.environ['PM_CHANNEL_ID']))
+        pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{int(os.environ['ROLE_ID'])}>"
 
-        #await pm_channel.send(pm_message)
+        logging.info(f'Sending message {ecs_message} to {ecs_channel}')
+        logging.info(f'Sending message {pm_message} to {pm_channel}')
+
         await ecs_channel.send(ecs_message)
+        await pm_channel.send(pm_message)
 
   def _add_url_to_db(self, url):
     """Tries to add URL to DB, fails if it exists"""
@@ -58,5 +58,5 @@ class URLChecker:
       self.conn.commit()
       logging.info(f'Adding URL to DB: {url}')
       return True
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError as e:
       return False
