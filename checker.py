@@ -4,63 +4,72 @@ import sqlite3
 
 import aiohttp
 from bs4 import BeautifulSoup
+from discord import Client
 
 logging.basicConfig(level=logging.INFO)
 
 
 class URLChecker:
+    """Checking blog posts on specific URL"""
 
-  def __init__(self, url, db_name):
-    self.url = url
-    self.conn = sqlite3.connect(db_name, check_same_thread=False)
-    self.cursor = self.conn.cursor()
-    self._create_table()
+    def __init__(self, url, db_name):
+        self.url = url
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        self._create_table()
 
-  def _create_table(self):
-    """Creates a table for storing URLs"""
-    self.cursor.execute('''CREATE TABLE IF NOT EXISTS urls
-                             (url text UNIQUE)''')
-    self.conn.commit()
+    def _create_table(self):
+        """Creates a table for storing URLs"""
+        self.cursor.execute(
+            """CREATE TABLE IF NOT EXISTS urls
+                             (url text UNIQUE)"""
+        )
+        self.conn.commit()
 
-  async def handle_all_post_urls(self, client):
-    """Gets all URLs which lead to blog posts and sends them"""
-    try:
-      async with aiohttp.ClientSession() as session:
-        async with session.get(self.url) as response:
-          html = await response.text()
-          
-          logging.info(f'Successfully connected to {self.url}')
-          logging.info(f'Currently logged on as {client.user}')
-    except Exception as e:
-      logging.error(f'Failed to fetch URL: {e}')
-      return
-    soup = BeautifulSoup(html, 'html.parser')
+    async def get_all_post_urls(self, client: Client) -> dict:
+        """Gets all URLs which lead to blog posts"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self.url) as response:
+                    html = await response.text()
 
-    h3s = soup.find_all('h3', {'class': 'post-title entry-title'})
-    new_urls = {h3.find('a')['href']: h3.find('a').text for h3 in h3s}
+                    logging.info(f"Successfully connected to {self.url}")
+                    logging.info(f"Currently logged on as {client.user}")
+        except Exception as e:
+            logging.error(f"Failed to fetch URL: {e}")
+            return
+        soup = BeautifulSoup(html, "html.parser")
 
-    for url, title in new_urls.items():
-      success = self._add_url_to_db(url)
-      if success:
-        ecs_channel = client.get_channel(int(os.environ['ECS_CHANNEL_ID']))
-        ecs_message = f"** :newspaper: | {title}**\n\n{url}"
+        h3s = soup.find_all("h3", {"class": "post-title entry-title"})
+        new_urls = {h3.find("a")["href"]: h3.find("a").text for h3 in h3s}
 
-        pm_channel = client.get_channel(int(os.environ['PM_CHANNEL_ID']))
-        pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{int(os.environ['ROLE_ID'])}>"
+        return new_urls
 
-        logging.info(f'Sending message {ecs_message} to {ecs_channel}')
-        logging.info(f'Sending message {pm_message} to {pm_channel}')
+    async def send_msgs_to_channels(self, client: Client, url_list: dict):
+        """Send messages with blog posts to Discord channels"""
+        for url, title in url_list.items():
+            success = self._add_url_to_db(url)
+            if success:
+                ecs_channel = client.get_channel(int(os.environ["ECS_CHANNEL_ID"]))
+                ecs_message = f"** :newspaper: | {title}**\n\n{url}"
 
-        await ecs_channel.send(ecs_message)
-        await pm_channel.send(pm_message)
-    
+                pm_channel = client.get_channel(int(os.environ["PM_CHANNEL_ID"]))
+                pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{int(os.environ['ROLE_ID'])}>"
 
-  def _add_url_to_db(self, url):
-    """Tries to add URL to DB, fails if it exists"""
-    try:
-      self.cursor.execute("INSERT INTO urls VALUES (?)", (url, ))
-      self.conn.commit()
-      logging.info(f'Adding URL to DB: {url}')
-      return True
-    except sqlite3.IntegrityError as e:
-      return False
+                logging.info(f"Sending message {ecs_message} to {ecs_channel}")
+                logging.info(f"Sending message {pm_message} to {pm_channel}")
+
+                await ecs_channel.send(ecs_message)
+
+                pm_sent_msg = await pm_channel.send(pm_message)
+                await pm_sent_msg.publish()
+
+    def _add_url_to_db(self, url: str):
+        """Tries to add URL to DB, fails if it exists"""
+        try:
+            self.cursor.execute("INSERT INTO urls VALUES (?)", (url,))
+            self.conn.commit()
+            logging.info(f"Adding URL to DB: {url}")
+            return True
+        except sqlite3.IntegrityError:
+            return False
