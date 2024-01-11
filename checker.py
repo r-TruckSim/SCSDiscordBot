@@ -36,7 +36,7 @@ class URLChecker:
                     logging.info("Successfully connected to %s", self.url)
                     logging.info("Currently logged on as %s", client.user)
         except Exception as e:
-            logging.error("Failed to fetch URL: %s", e)
+            logging.error("Failed to fetch URL: %s", repr(e))
             return
 
         soup = BeautifulSoup(html, "html.parser")
