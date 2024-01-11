@@ -33,11 +33,12 @@ class URLChecker:
                 async with session.get(self.url) as response:
                     html = await response.text()
 
-                    logging.info(f"Successfully connected to {self.url}")
-                    logging.info(f"Currently logged on as {client.user}")
+                    logging.info("Successfully connected to %s", self.url)
+                    logging.info("Currently logged on as %s", client.user)
         except Exception as e:
-            logging.error(f"Failed to fetch URL: {e}")
+            logging.error("Failed to fetch URL: %s", e)
             return
+
         soup = BeautifulSoup(html, "html.parser")
 
         h3s = soup.find_all("h3", {"class": "post-title entry-title"})
@@ -47,6 +48,10 @@ class URLChecker:
 
     async def send_msgs_to_channels(self, client: Client, url_list: dict):
         """Send messages with blog posts to Discord channels"""
+        if url_list is None:
+            logging.error("URL list is empty, message won't be sent!")
+            return
+
         for url, title in url_list.items():
             success = self._add_url_to_db(url)
             if success:
@@ -56,8 +61,8 @@ class URLChecker:
                 pm_channel = client.get_channel(int(os.environ["PM_CHANNEL_ID"]))
                 pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{int(os.environ['ROLE_ID'])}>"
 
-                logging.info(f"Sending message {ecs_message} to {ecs_channel}")
-                logging.info(f"Sending message {pm_message} to {pm_channel}")
+                logging.info("Sending message %s to %s", ecs_message, ecs_channel)
+                logging.info("Sending message %s to %s", pm_message, pm_channel)
 
                 await ecs_channel.send(ecs_message)
 
@@ -69,7 +74,7 @@ class URLChecker:
         try:
             self.cursor.execute("INSERT INTO urls VALUES (?)", (url,))
             self.conn.commit()
-            logging.info(f"Adding URL to DB: {url}")
+            logging.info("Adding URL to DB: %s", url)
             return True
         except sqlite3.IntegrityError:
             return False

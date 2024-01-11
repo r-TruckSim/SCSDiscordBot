@@ -14,7 +14,7 @@ class MyClient(Client):
 
     async def on_ready(self):
         """Starts up bot and creates scheduled async task"""
-        logging.info(f"Logged on as {self.user}!")
+        logging.info("Logged on as %s!", self.user)
         self.loop.create_task(run_schedule())
 
 
