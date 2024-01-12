@@ -30,6 +30,7 @@ URL = "https://blog.scssoft.com/"
 checker = URLChecker(URL, "urls.db")
 
 intents = Intents.default()
+intents.members = True
 client = MyClient(intents=intents)
 
 client.run(os.environ["DISCORD_TOKEN"])

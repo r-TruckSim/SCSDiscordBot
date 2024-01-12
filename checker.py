@@ -27,7 +27,8 @@ class URLChecker:
         self.conn.commit()
 
     async def get_all_post_urls(self, client: Client) -> dict:
-        """Gets all URLs which lead to blog posts"""
+        """Gets all URLs which lead to blog posts.
+           Sends DM to user if URL retrieval is not successful"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(self.url) as response:
@@ -36,7 +37,11 @@ class URLChecker:
                     logging.info("Successfully connected to %s", self.url)
                     logging.info("Currently logged on as %s", client.user)
         except Exception as e:
-            logging.error("Failed to fetch URL: %s", repr(e))
+            error_str = "Failed to fetch URL: %s", repr(e)
+            logging.error(error_str)
+
+            user = client.get_user(int(os.environ["USER_ID"]))
+            await user.send(error_str)
             return
 
         soup = BeautifulSoup(html, "html.parser")
