@@ -21,9 +21,14 @@ class MyClient(Client):
 async def run_schedule():
     """Runs URL checking on schedule"""
     while True:
-        urls = await checker.get_all_post_urls(client)
-        await checker.send_msgs_to_channels(client, urls)
-        await asyncio.sleep(77)
+        try:
+            urls = await checker.get_all_post_urls(client)
+            await checker.send_msgs_to_channels(client, urls)
+        except Exception as e:
+            logging.error("Exception occurred: %s", e)
+            await asyncio.sleep(77)
+        finally:
+            await asyncio.sleep(77)
 
 
 URL = "https://blog.scssoft.com/"
