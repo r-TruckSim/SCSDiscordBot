@@ -1,13 +1,17 @@
+import argparse
 import asyncio
 import os
 import logging
 
 from discord import Client, Intents
-
 from checker import URLChecker
 
 logging.basicConfig(level=logging.INFO)
 
+parser = argparse.ArgumentParser(description="Discord Bot to send messages and check URLs.")
+parser.add_argument('--channel_id', type=str, help='The ID of the channel to send the message to.')
+parser.add_argument('--message', type=str, help='The message content to send.')
+args = parser.parse_args()
 
 class MyClient(Client):
     """Discord client"""
@@ -15,8 +19,20 @@ class MyClient(Client):
     async def on_ready(self):
         """Starts up bot and creates scheduled async task"""
         logging.info("Logged on as %s!", self.user)
-        self.loop.create_task(run_schedule())
 
+        if args.channel_id and args.message:
+            await send_custom_message(args.channel_id, args.message)
+        else:
+            self.loop.create_task(run_schedule())
+
+async def send_custom_message(channel_id, message):
+    """Send custom message via CLI"""
+    channel = client.get_channel(int(channel_id))
+    if channel:
+        await channel.send(message)
+        logging.info("Sent custom message to channel %s: %s", channel_id, message)
+    else:
+        logging.error("Channel with ID %s not found.", channel_id)
 
 async def run_schedule():
     """Runs URL checking on schedule"""
