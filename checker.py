@@ -30,12 +30,11 @@ class URLChecker:
         """Gets all URLs which lead to blog posts.
            Sends DM to user if URL retrieval is not successful"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self.url) as response:
-                    html = await response.text()
+            async with aiohttp.ClientSession() as session, session.get(self.url) as response:
+                html = await response.text()
 
-                    logging.info("Successfully connected to %s", self.url)
-                    logging.info("Currently logged on as %s", client.user)
+                logging.info("Successfully connected to %s", self.url)
+                logging.info("Currently logged on as %s", client.user)
         except Exception as e:
             error_str = "Failed to fetch URL: %s", repr(e)
             logging.error(error_str)
@@ -53,26 +52,33 @@ class URLChecker:
 
     async def send_msgs_to_channels(self, client: Client, url_list: dict):
         """Send messages with blog posts to Discord channels"""
-        if url_list is None:
+
+        async def send_message(channel_id, message, role_id=None):
+            channel = client.get_channel(int(channel_id))
+            sent_message = await channel.send(message)
+
+            if role_id:
+                await sent_message.publish()
+                message += f"\n\n<@&{int(role_id)}>"
+
+            logging.info("Sending message %s to %s", message, channel)
+            return sent_message
+
+        if not url_list:
             logging.error("URL list is empty, message won't be sent!")
             return
 
+        ecs_channel_id = os.environ["ECS_CHANNEL_ID"]
+        tsl_channel_id = os.environ["TSL_CHANNEL_ID"]
+        pm_channel_id = os.environ["PM_CHANNEL_ID"]
+        role_id = os.environ["ROLE_ID"]
+
         for url, title in url_list.items():
-            success = self._add_url_to_db(url)
-            if success:
-                ecs_channel = client.get_channel(int(os.environ["ECS_CHANNEL_ID"]))
-                ecs_message = f"** :newspaper: | {title}**\n\n{url}"
-
-                pm_channel = client.get_channel(int(os.environ["PM_CHANNEL_ID"]))
-                pm_message = f"** :newspaper: | {title}**\n\n{url}\n\n<@&{int(os.environ['ROLE_ID'])}>"
-
-                logging.info("Sending message %s to %s", ecs_message, ecs_channel)
-                logging.info("Sending message %s to %s", pm_message, pm_channel)
-
-                await ecs_channel.send(ecs_message)
-
-                pm_sent_msg = await pm_channel.send(pm_message)
-                await pm_sent_msg.publish()
+            if self._add_url_to_db(url):
+                message = f"** :newspaper: | {title}**\n\n{url}"
+                await send_message(ecs_channel_id, message)
+                await send_message(tsl_channel_id, message)
+                await send_message(pm_channel_id, message, role_id)
 
     def _add_url_to_db(self, url: str):
         """Tries to add URL to DB, fails if it exists"""
