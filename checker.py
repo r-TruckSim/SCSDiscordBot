@@ -56,7 +56,7 @@ class URLChecker:
         async def send_message(channel_id, message, role_id=None):
             channel = client.get_channel(int(channel_id))
             if role_id:
-                message += f"\n\n<@&{int(role_id)}"
+                message += f"\n\n<@&{int(role_id)}>"
             sent_message = await channel.send(message)
             if role_id:
                 await sent_message.publish()
