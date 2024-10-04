@@ -68,17 +68,17 @@ class URLChecker:
             logging.error("URL list is empty, message won't be sent!")
             return
 
-        ecs_channel_id = os.environ["ECS_CHANNEL_ID"]
-        tsl_channel_id = os.environ["TSL_CHANNEL_ID"]
-        pm_channel_id = os.environ["PM_CHANNEL_ID"]
+        td_channel_id = os.environ["TD_CHANNEL_ID"]
+        td2_channel_id = os.environ["TD2_CHANNEL_ID"]
+        ts_channel_id = os.environ["TS_CHANNEL_ID"]
         role_id = os.environ["ROLE_ID"]
 
         for url, title in url_list.items():
             if self._add_url_to_db(url):
                 message = f"** :newspaper: | {title}**\n\n{url}"
-                await send_message(ecs_channel_id, message)
-                await send_message(tsl_channel_id, message)
-                await send_message(pm_channel_id, message, role_id)
+                await send_message(td_channel_id, message)
+                await send_message(td2_channel_id, message)
+                await send_message(ts_channel_id, message, role_id)
 
     def _add_url_to_db(self, url: str):
         """Tries to add URL to DB, fails if it exists"""
