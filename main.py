@@ -2,10 +2,14 @@ import argparse
 import asyncio
 import os
 import logging
+import discord
+from discord.ext import commands
 
 from discord import Client, Intents
 from checker import URLChecker
 
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix="!", intents=intents)
 logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description="Discord Bot to send messages and check URLs.")
@@ -54,4 +58,12 @@ intents = Intents.default()
 intents.members = True
 client = MyClient(intents=intents)
 
+@bot.event
+async def on_ready():
+    custom_status = discord.Activity(
+        type=discord.ActivityType.custom,
+        name="Delivering cargo to .gg/trucksim"
+    )
+    await bot.change_presence(activity=custom_status)
+    
 client.run(os.environ["DISCORD_TOKEN"])
