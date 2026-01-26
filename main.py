@@ -25,8 +25,6 @@ async def on_ready():
     )
     await bot.change_presence(activity=custom_status)
 
-    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-
 class MyClient(Client):
     """Discord client"""
 
