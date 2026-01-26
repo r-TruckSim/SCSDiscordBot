@@ -17,6 +17,16 @@ parser.add_argument('--channel_id', type=str, help='The ID of the channel to sen
 parser.add_argument('--message', type=str, help='The message content to send.')
 args = parser.parse_args()
 
+@bot.event
+async def on_ready():
+    custom_status = discord.Activity(
+        type=discord.ActivityType.custom,
+        name="Delivering cargo to .gg/trucksim"
+    )
+    await bot.change_presence(activity=custom_status)
+
+    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+
 class MyClient(Client):
     """Discord client"""
 
@@ -57,13 +67,5 @@ checker = URLChecker(URL, "urls.db")
 intents = Intents.default()
 intents.members = True
 client = MyClient(intents=intents)
-
-@bot.event
-async def on_ready():
-    custom_status = discord.Activity(
-        type=discord.ActivityType.custom,
-        name="Delivering cargo to .gg/trucksim"
-    )
-    await bot.change_presence(activity=custom_status)
     
 client.run(os.environ["DISCORD_TOKEN"])
